@@ -1,34 +1,37 @@
-type ExplanationStep = {
-  step: number;
-  explanation: string;
-};
+import React from "react";
 
-type ExplanationPanelProps = {
-  steps: ExplanationStep[];
-};
+interface ExplanationPanelProps {
+  explanations: string[] | null;
+}
 
-function ExplanationPanel({ steps }: ExplanationPanelProps) {
-  if (steps.length === 0) {
-    return (
-      <div style={{ marginTop: "20px", color: "#666" }}>
-        No explanation yet.
-      </div>
-    );
-  }
+const ExplanationPanel: React.FC<ExplanationPanelProps> = ({ explanations }) => {
 
   return (
-    <div style={{ marginTop: "20px" }}>
-      <h2>Explanation</h2>
+    <div
+      style={{
+        flex: 1,
+        padding: "20px",
+        borderLeft: "1px solid #333",
+        overflowY: "auto",
+        backgroundColor: "#111",
+        color: "#fff"
+      }}
+    >
+      <h2 style={{ marginBottom: "15px" }}>Explanation</h2>
 
-      <ul>
-        {steps.map((item) => (
-          <li key={item.step} style={{ marginBottom: "10px" }}>
-            <strong>Step {item.step}:</strong> {item.explanation}
-          </li>
-        ))}
-      </ul>
+      {explanations && explanations.length > 0 ? (
+        explanations.map((item, index) => (
+          <div key={index} style={{ marginBottom: "8px" }}>
+            • {item}
+          </div>
+        ))
+      ) : (
+        <div style={{ opacity: 0.6 }}>
+          No explanation generated yet.
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default ExplanationPanel;

@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-class ExplainRequest(BaseModel):
-    language: str = Field(..., example="python")
-    code: str = Field(..., example="x = a + 2")
+
+class CodeRequest(BaseModel):
+    code: str
+    language: str

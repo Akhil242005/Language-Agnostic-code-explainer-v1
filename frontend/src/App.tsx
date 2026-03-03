@@ -1,132 +1,249 @@
-import { useState } from "react";
-import { explainCode } from "./api/explain";
-
-type ExplanationStep = {
-  step: number;
-  node_type: string;
-  explanation: string;
-};
+import React, { useState, useRef, useEffect } from "react";
 
 function App() {
-  const [code, setCode] = useState(`score = 0
-bonus = 5
-penalty = 2
-limit = 100
-
-if score < 20:
-    score = score + 10
-else:
-    score = score + 3
-
-for step in range(5):
-    score = score + step
-
-while score < 60:
-    score = score + 4`);
-
-  const [steps, setSteps] = useState<ExplanationStep[]>([]);
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("python");
+  const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
-  const handleExplain = async () => {
+  const codeRef = useRef<HTMLTextAreaElement>(null);
+  const outputRef = useRef<HTMLTextAreaElement>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Sync scroll for line numbers
+  const syncScroll = (source: any, target: any) => {
+    target.scrollTop = source.scrollTop;
+  };
+
+  const explainCode = async () => {
     setLoading(true);
-    const result = await explainCode(code);
-    setSteps(result.steps || []);
+    setOutput("");
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, language }),
+      });
+
+      const data = await response.json();
+      setOutput(data.explanations.join("\n\n"));
+    } catch {
+      setOutput("Error generating explanation.");
+    }
+
     setLoading(false);
   };
 
+  const toggleSpeech = () => {
+  if (!output) return;
+
+  if (speaking) {
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(output);
+
+  const selectVoice = () => {
+    const voices = window.speechSynthesis.getVoices();
+
+    // Prioritize high quality female English voices
+    const preferredVoice =
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (
+            v.name.toLowerCase().includes("zira") ||
+            v.name.toLowerCase().includes("samantha") ||
+            v.name.toLowerCase().includes("female") ||
+            v.name.toLowerCase().includes("woman")
+          )
+      ) ||
+      voices.find((v) => v.lang.startsWith("en")) ||
+      voices[0];
+
+    utterance.voice = preferredVoice;
+
+    // Softer settings
+    utterance.rate = 0.85;   // slower
+    utterance.pitch = 1.1;   // slightly higher pitch
+    utterance.volume = 1;
+
+    utterance.onend = () => setSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+    setSpeaking(true);
+  };
+
+  // Some browsers load voices asynchronously
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = selectVoice;
+  } else {
+    selectVoice();
+  }
+};
+
+  const generateLineNumbers = (text: string) =>
+    text.split("\n").map((_, i) => i + 1).join("\n");
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100vw",
-        background: "linear-gradient(135deg, #020617, #0f172a)",
-        color: "#e5e7eb",
-        fontFamily: "Inter, system-ui, sans-serif",
-      }}
-    >
-      {/* CONTENT WRAPPER */}
-      <div
-        style={{
-          width: "100%",
-          padding: "32px 48px",
-          boxSizing: "border-box",
-        }}
-      >
-        {/* HEADER */}
-        <h1 style={{ marginBottom: "6px", fontSize: "40px" }}>
-          Language-Agnostic Code Explainer
-        </h1>
-        <p style={{ color: "#94a3b8", marginBottom: "28px" }}>
-          Static analysis–based explanation of program logic
-        </p>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <h1 style={styles.title}>Code Explainer</h1>
 
-        {/* INPUT LABEL */}
-        <label style={{ fontSize: "14px", color: "#cbd5f5" }}>
-          Input Code
-        </label>
+        <div style={styles.topBar}>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={styles.select}
+          >
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="cpp">C++</option>
+          </select>
 
-        {/* CODE EDITOR */}
-        <textarea
-          rows={18}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          style={{
-            width: "100%",
-            marginTop: "8px",
-            marginBottom: "18px",
-            padding: "16px",
-            fontFamily: "monospace",
-            fontSize: "14px",
-            background: "#020617",
-            color: "#e5e7eb",
-            border: "1px solid #1e293b",
-            borderRadius: "10px",
-            outline: "none",
-            resize: "vertical",
-          }}
-        />
+          <button onClick={explainCode} style={styles.primaryBtn}>
+            {loading ? "Generating..." : "Explain"}
+          </button>
 
-        {/* ACTION BUTTON */}
-        <button
-          onClick={handleExplain}
-          disabled={loading}
-          style={{
-            padding: "10px 20px",
-            background: loading ? "#334155" : "#2563eb",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontWeight: 500,
-            marginBottom: "32px",
-          }}
-        >
-          {loading ? "Analyzing…" : "Explain Code"}
-        </button>
-
-        {/* EXPLANATION */}
-        {steps.length > 0 && (
-          <div
+          <button
+            onClick={toggleSpeech}
             style={{
-              maxWidth: "1100px",
-              background: "#f8fafc",
-              color: "#0f172a",
-              padding: "24px",
-              borderRadius: "10px",
-              lineHeight: "1.7",
+              ...styles.voiceBtn,
+              backgroundColor: speaking ? "#ff4d4d" : "#00b894",
             }}
           >
-            <h3 style={{ marginBottom: "14px" }}>Explanation</h3>
-            {steps.map((step) => (
-              <div key={step.step} style={{ marginBottom: "10px" }}>
-                • {step.explanation}
-              </div>
-            ))}
+            🔊
+          </button>
+        </div>
+
+        <div style={styles.editors}>
+          {/* CODE PANEL */}
+          <div style={styles.editorWrapper}>
+            <div style={styles.lineNumbers}>
+              <pre>{generateLineNumbers(code)}</pre>
+            </div>
+
+            <textarea
+              ref={codeRef}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              onScroll={(e) =>
+                syncScroll(e.target, e.currentTarget.previousSibling)
+              }
+              placeholder="Paste your code here..."
+              style={styles.textarea}
+            />
           </div>
-        )}
+
+          {/* OUTPUT PANEL */}
+          <div style={styles.editorWrapper}>
+            <div style={styles.lineNumbers}>
+              <pre>{generateLineNumbers(output)}</pre>
+            </div>
+
+            <textarea
+              ref={outputRef}
+              value={output}
+              readOnly
+              onScroll={(e) =>
+                syncScroll(e.target, e.currentTarget.previousSibling)
+              }
+              placeholder="Explanation will appear here..."
+              style={styles.textarea}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
+const styles: any = {
+  page: {
+    minHeight: "100vh",
+    background: "#0f172a",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px",
+  },
+  container: {
+    width: "95%",
+    maxWidth: "1400px",
+    background: "#1e293b",
+    borderRadius: "16px",
+    padding: "25px",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.5)",
+    color: "#f1f5f9",
+  },
+  title: {
+    textAlign: "center",
+    marginBottom: "20px",
+    fontWeight: 600,
+  },
+  topBar: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "15px",
+    marginBottom: "20px",
+  },
+  select: {
+    padding: "8px",
+    borderRadius: "6px",
+    border: "none",
+  },
+  primaryBtn: {
+    padding: "8px 16px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#3b82f6",
+    color: "white",
+    cursor: "pointer",
+  },
+  voiceBtn: {
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    border: "none",
+    color: "white",
+    cursor: "pointer",
+  },
+  editors: {
+    display: "flex",
+    gap: "20px",
+  },
+  editorWrapper: {
+    display: "flex",
+    flex: 1,
+    background: "#111827",
+    borderRadius: "10px",
+    overflow: "hidden",
+    border: "1px solid #334155",
+  },
+  lineNumbers: {
+    background: "#0f172a",
+    padding: "15px 10px",
+    textAlign: "right",
+    color: "#64748b",
+    userSelect: "none",
+    fontFamily: "monospace",
+    fontSize: "14px",
+  },
+  textarea: {
+    flex: 1,
+    padding: "15px",
+    border: "none",
+    outline: "none",
+    resize: "none",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    background: "#111827",
+    color: "#f8fafc",
+  },
+};
 
 export default App;
