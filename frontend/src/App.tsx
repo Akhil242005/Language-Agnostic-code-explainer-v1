@@ -1,17 +1,100 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 
 type LanguageKey = "python" | "javascript" | "cpp";
 
-const LANGUAGE_THEMES: Record<LanguageKey, any> = {
+type LanguageTheme = {
+  pageBackground: string;
+  pageBackgroundImage: string;
+
+  // glassy overlay
+  pageGlassOverlay: string;
+  pageGlassOverlayBlurPx: number;
+
+  accent: string;
+  accentSoft: string;
+  accentStrong: string;
+
+  textPrimary: string;
+  textMuted: string;
+  textSoft: string;
+
+  headerBadgeBg: string;
+  headerBadgeBorder: string;
+  headerTitleGradient: string;
+
+  tabActiveBg: string;
+  tabInactiveBg: string;
+  tabActiveBorder: string;
+  tabInactiveBorder: string;
+  tabActiveShadow: string;
+  tabInactiveShadow: string;
+  tabTextActive: string;
+  tabTextInactive: string;
+
+  panelBackground: string;
+  panelBorder: string;
+  panelHeaderBg: string;
+  panelHeaderText: string;
+  panelHeaderDivider: string;
+
+  editorGutterBg: string;
+  editorGutterText: string;
+  editorGutterBorder: string;
+  editorBg: string;
+  editorText: string;
+  editorPlaceholder: string;
+  editorSelection: string;
+
+  botBubbleBg: string;
+  botBubbleBorder: string;
+  botBubbleTitle: string;
+  botBubbleText: string;
+  botBubbleShadow: string;
+
+  petAuraGradient: string;
+  petHeadBg: string;
+  petHeadBorder: string;
+  petEyeBg: string;
+  petEyeBorder: string;
+  petMouthBorder: string;
+  petBaseGradient: string;
+  petBaseBorder: string;
+  petBaseShadow: string;
+  petPupilGradient: string;
+  petPupilShadow: string;
+  petShadow: string;
+
+  primaryButtonBg: string;
+  primaryButtonBorder: string;
+  primaryButtonShadow: string;
+  secondaryButtonBg: string;
+  secondaryButtonBorder: string;
+  secondaryButtonShadow: string;
+
+  selectBg: string;
+  selectBorder: string;
+  selectText: string;
+  focusRing: string;
+};
+
+const LANGUAGE_THEMES: Record<LanguageKey, LanguageTheme> = {
   python: {
     pageBackground: "#020617",
     pageBackgroundImage:
       "radial-gradient(circle at 0% 0%, rgba(56,189,248,0.22), transparent 55%)," +
       "radial-gradient(circle at 100% 100%, rgba(45,212,191,0.16), transparent 55%)," +
       "linear-gradient(to bottom, #020617, #020617 40%, #020617)",
+    pageGlassOverlay:
+      "radial-gradient(circle at 20% 0%, rgba(34,211,238,0.12), transparent 60%)," +
+      "radial-gradient(circle at 85% 110%, rgba(168,85,247,0.10), transparent 55%)," +
+      "linear-gradient(135deg, rgba(2,6,23,0.38), rgba(2,6,23,0.58))",
+    pageGlassOverlayBlurPx: 18,
     accent: "#22d3ee",
     accentSoft: "rgba(34,211,238,0.25)",
     accentStrong: "rgba(34,211,238,0.65)",
+    textPrimary: "#f8fafc",
+    textMuted: "rgba(226,232,240,0.72)",
+    textSoft: "rgba(148,163,184,0.85)",
     headerBadgeBg: "rgba(15,23,42,0.9)",
     headerBadgeBorder: "rgba(34,211,238,0.5)",
     headerTitleGradient:
@@ -24,16 +107,36 @@ const LANGUAGE_THEMES: Record<LanguageKey, any> = {
     tabActiveShadow:
       "0 10px 28px rgba(15,23,42,0.9), 0 0 0 1px rgba(15,23,42,0.9)",
     tabInactiveShadow: "0 6px 16px rgba(15,23,42,0.85)",
+    tabTextActive: "#f8fafc",
+    tabTextInactive: "rgba(226,232,240,0.78)",
     panelBackground:
       "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.9))",
     panelBorder: "1px solid rgba(30,64,175,0.7)",
     panelHeaderBg:
       "linear-gradient(90deg, rgba(15,23,42,0.9), rgba(34,211,238,0.18))",
+    panelHeaderText: "rgba(248,250,252,0.9)",
+    panelHeaderDivider: "rgba(148,163,184,0.35)",
+    editorGutterBg: "rgba(2,6,23,0.92)",
+    editorGutterText: "rgba(148,163,184,0.8)",
+    editorGutterBorder: "rgba(15,23,42,0.9)",
+    editorBg: "rgba(2,6,23,0.9)",
+    editorText: "#f8fafc",
+    editorPlaceholder: "rgba(148,163,184,0.75)",
+    editorSelection: "rgba(34,211,238,0.18)",
+    botBubbleBg:
+      "linear-gradient(135deg, rgba(15,23,42,0.72), rgba(34,211,238,0.10))",
+    botBubbleBorder: "rgba(34,211,238,0.55)",
+    botBubbleTitle: "rgba(148,163,184,0.9)",
+    botBubbleText: "rgba(248,250,252,0.92)",
+    botBubbleShadow: "0 18px 46px rgba(15,23,42,0.96)",
     petAuraGradient:
       "radial-gradient(circle at 30% 0%, rgba(56,189,248,0.45), transparent 55%)," +
       "radial-gradient(circle at 80% 100%, rgba(45,212,191,0.4), transparent 55%)",
     petHeadBg: "#020617",
     petHeadBorder: "1px solid rgba(148,163,184,0.7)",
+    petEyeBg: "rgba(15,23,42,1)",
+    petEyeBorder: "1px solid rgba(148,163,184,0.7)",
+    petMouthBorder: "rgba(148,163,184,0.9)",
     petBaseGradient:
       "linear-gradient(to right, rgba(15,23,42,1), rgba(34,211,238,1))",
     petBaseBorder: "1px solid rgba(34,211,238,0.9)",
@@ -41,6 +144,8 @@ const LANGUAGE_THEMES: Record<LanguageKey, any> = {
     petPupilGradient:
       "radial-gradient(circle at 30% 20%, #f9fafb, #22d3ee 55%, #0f172a)",
     petPupilShadow: "0 0 12px rgba(34,211,238,0.95)",
+    petShadow:
+      "radial-gradient(circle, rgba(15,23,42,1), transparent 72%)",
     primaryButtonBg:
       "linear-gradient(135deg, rgba(34,211,238,0.28), rgba(59,130,246,0.4))",
     primaryButtonBorder: "1px solid rgba(34,211,238,0.7)",
@@ -50,106 +155,163 @@ const LANGUAGE_THEMES: Record<LanguageKey, any> = {
       "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(34,211,238,0.32))",
     secondaryButtonBorder: "1px solid rgba(148,163,184,0.7)",
     secondaryButtonShadow:
-      "0 12px 26px rgba(15,23,42,0.96), 0 0 0 1px rgba(15,23,42,0.9)"
+      "0 12px 26px rgba(15,23,42,0.96), 0 0 0 1px rgba(15,23,42,0.9)",
+    selectBg: "rgba(15,23,42,0.85)",
+    selectBorder: "rgba(34,211,238,0.45)",
+    selectText: "rgba(248,250,252,0.92)",
+    focusRing: "0 0 0 3px rgba(34,211,238,0.25)"
   },
   javascript: {
-    pageBackground: "#030712",
+    // "Sunset Circuit" — warm, playful, very different from Python
+    pageBackground: "#0b1020",
     pageBackgroundImage:
-      "radial-gradient(circle at 0% 0%, rgba(250,204,21,0.16), transparent 60%)," +
-      "radial-gradient(circle at 100% 100%, rgba(248,113,113,0.16), transparent 55%)," +
-      "linear-gradient(to bottom, #030712, #030712 40%, #020617)",
-    accent: "#facc15",
-    accentSoft: "rgba(250,204,21,0.26)",
-    accentStrong: "rgba(250,204,21,0.7)",
-    headerBadgeBg: "rgba(15,23,42,0.94)",
-    headerBadgeBorder: "rgba(250,204,21,0.5)",
+      "radial-gradient(circle at 14% 8%, rgb(255, 249, 249), transparent 55%)," +
+      "radial-gradient(circle at 92% 20%, rgba(129, 126, 126, 0.87), transparent 55%)," +
+      "radial-gradient(circle at 70% 120%, rgba(188, 171, 206, 0.16), transparent 60%)," +
+      "linear-gradient(135deg, #c2d0ff, #626790 55%, #000000)",
+    pageGlassOverlay:
+      "linear-gradient(135deg, rgba(225, 147, 147, 0.04), rgba(234, 108, 108, 0.02))," +
+      "radial-gradient(circle at 20% 30%, rgba(251,191,36,0.08), transparent 55%)," +
+      "radial-gradient(circle at 80% 80%, rgba(251,113,133,0.07), transparent 55%)",
+    pageGlassOverlayBlurPx: 22,
+    accent: "#000000",
+    accentSoft: "rgba(218, 178, 77, 0.93)",
+    accentStrong: "rgba(237, 94, 94, 0.75)",
+    textPrimary: "#fff7ed",
+    textMuted: "rgba(0, 0, 0, 0.92)",
+    textSoft: "rgb(0, 0, 0)",
+    headerBadgeBg: "rgba(15,12,22,0.82)",
+    headerBadgeBorder: "rgba(251,191,36,0.55)",
     headerTitleGradient:
-      "linear-gradient(120deg, #facc15, #fb923c, #f97316)",
+      "linear-gradient(120deg, #0f0f0f, #62474b, #c084fc)",
     tabActiveBg:
-      "linear-gradient(135deg, rgba(15,23,42,0.9), rgba(250,204,21,0.32))",
-    tabInactiveBg: "rgba(15,23,42,0.6)",
-    tabActiveBorder: "1px solid rgba(250,204,21,0.85)",
-    tabInactiveBorder: "1px solid rgba(148,163,184,0.55)",
+      "linear-gradient(135deg, rgba(20,12,35,0.88), rgba(251,191,36,0.22))",
+    tabInactiveBg: "rgba(18,12,28,0.55)",
+    tabActiveBorder: "1px solid rgba(239, 133, 80, 0.85)",
+    tabInactiveBorder: "1px solid rgba(243, 156, 227, 0.35)",
     tabActiveShadow:
-      "0 10px 30px rgba(15,23,42,0.95), 0 0 0 1px rgba(15,23,42,0.9)",
-    tabInactiveShadow: "0 6px 18px rgba(15,23,42,0.9)",
+      "0 12px 34px rgba(126, 132, 168, 0.92), 0 0 0 1px rgba(135, 106, 141, 0.9)",
+    tabInactiveShadow: "0 8px 20px rgba(103, 105, 124, 0.9)",
+    tabTextActive: "#dfcbbc",
+    tabTextInactive: "rgba(255,237,213,0.78)",
     panelBackground:
-      "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(30,64,175,0.96))",
-    panelBorder: "1px solid rgba(250,204,21,0.7)",
+      "linear-gradient(145deg, rgba(98, 77, 131, 0.92), rgba(35,12,28,0.78))",
+    panelBorder: "1px solid rgba(224, 168, 219, 0.45)",
     panelHeaderBg:
-      "linear-gradient(90deg, rgba(15,23,42,0.95), rgba(250,204,21,0.18))",
+      "linear-gradient(90deg, rgba(18,12,28,0.92), rgba(248, 131, 102, 0.14))",
+    panelHeaderText: "rgba(255,247,237,0.92)",
+    panelHeaderDivider: "rgba(251,191,36,0.22)",
+    editorGutterBg: "rgba(12,8,18,0.86)",
+    editorGutterText: "rgba(255,237,213,0.55)",
+    editorGutterBorder: "rgba(251,191,36,0.16)",
+    editorBg: "rgba(10,7,16,0.82)",
+    editorText: "#fff7ed",
+    editorPlaceholder: "rgba(255,237,213,0.55)",
+    editorSelection: "rgba(251,191,36,0.14)",
+    botBubbleBg:
+      "linear-gradient(135deg, rgba(133, 114, 165, 0.74), rgba(251,113,133,0.10))",
+    botBubbleBorder: "rgba(238, 212, 118, 0.55)",
+    botBubbleTitle: "rgba(4, 4, 4, 0.75)",
+    botBubbleText: "rgba(0, 0, 0, 0.92)",
+    botBubbleShadow: "0 18px 52px rgba(144, 132, 179, 0.95)",
     petAuraGradient:
-      "radial-gradient(circle at 30% 0%, rgba(250,204,21,0.42), transparent 55%)," +
-      "radial-gradient(circle at 80% 100%, rgba(248,113,113,0.42), transparent 55%)",
-    petHeadBg: "#020617",
-    petHeadBorder: "1px solid rgba(250,204,21,0.7)",
+      "radial-gradient(circle at 25% 0%, rgba(197, 154, 200, 0.59), transparent 58%)," +
+      "radial-gradient(circle at 85% 100%, rgba(181, 146, 146, 0.81), transparent 58%)",
+    petHeadBg: "rgba(10,7,16,0.92)",
+    petHeadBorder: "1px solid rgba(255, 255, 255, 0.65)",
+    petEyeBg: "rgba(10,7,16,1)",
+    petEyeBorder: "1px solid rgba(251,191,36,0.35)",
+    petMouthBorder: "rgba(244, 243, 242, 0.75)",
     petBaseGradient:
-      "linear-gradient(to right, rgba(15,23,42,1), rgba(250,204,21,1))",
-    petBaseBorder: "1px solid rgba(250,204,21,0.9)",
-    petBaseShadow: "0 10px 24px rgba(250,204,21,0.7)",
+      "linear-gradient(90deg, rgba(18,12,28,1), rgb(243, 188, 239), rgba(251,113,133,1))",
+    petBaseBorder: "1px solid rgba(238, 153, 88, 0.75)",
+    petBaseShadow: "0 12px 26px rgba(251,191,36,0.45)",
     petPupilGradient:
-      "radial-gradient(circle at 30% 20%, #fefce8, #facc15 55%, #0f172a)",
-    petPupilShadow: "0 0 12px rgba(250,204,21,0.95)",
+      "radial-gradient(circle at 30% 20%, #fff7ed, #e1e2db 55%, #1a0b1d)",
+    petPupilShadow: "0 0 14px rgba(244, 216, 147, 0.93)",
+    petShadow: "radial-gradient(circle, rgba(8,6,14,1), transparent 72%)",
     primaryButtonBg:
-      "linear-gradient(135deg, rgba(250,204,21,0.32), rgba(248,113,113,0.35))",
-    primaryButtonBorder: "1px solid rgba(250,204,21,0.8)",
+      "linear-gradient(135deg, rgba(251,191,36,0.24), rgba(251,113,133,0.22), rgba(192,132,252,0.20))",
+    primaryButtonBorder: "1px solid rgba(251,191,36,0.7)",
     primaryButtonShadow:
-      "0 16px 34px rgba(15,23,42,0.97), 0 0 0 1px rgba(15,23,42,0.95)",
+      "0 16px 38px rgba(8,6,14,0.97), 0 0 0 1px rgba(8,6,14,0.9)",
     secondaryButtonBg:
-      "linear-gradient(135deg, rgba(15,23,42,0.96), rgba(250,204,21,0.26))",
-    secondaryButtonBorder: "1px solid rgba(148,163,184,0.7)",
+      "linear-gradient(135deg, rgba(18,12,28,0.86), rgba(251,113,133,0.14))",
+    secondaryButtonBorder: "1px solid rgba(251,113,133,0.35)",
     secondaryButtonShadow:
-      "0 12px 26px rgba(15,23,42,0.97), 0 0 0 1px rgba(15,23,42,0.95)"
+      "0 12px 30px rgba(8,6,14,0.97), 0 0 0 1px rgba(8,6,14,0.9)",
+    selectBg: "rgba(18,12,28,0.82)",
+    selectBorder: "rgba(251,191,36,0.45)",
+    selectText: "rgba(255,247,237,0.92)",
+    focusRing: "0 0 0 3px rgba(251,191,36,0.18)"
   },
   cpp: {
-    pageBackground: "#020617",
+    // "Crystalline Noir" — Sharp, glass-like monochrome with structural depth
+    pageBackground: "#000000",
     pageBackgroundImage:
-      "radial-gradient(circle at 0% 0%, rgba(129,140,248,0.26), transparent 55%)," +
-      "radial-gradient(circle at 100% 100%, rgba(244,114,182,0.2), transparent 55%)," +
-      "linear-gradient(to bottom, #020617, #020617 40%, #020617)",
-    accent: "#818cf8",
-    accentSoft: "rgba(129,140,248,0.3)",
-    accentStrong: "rgba(129,140,248,0.75)",
-    headerBadgeBg: "rgba(15,23,42,0.92)",
-    headerBadgeBorder: "rgba(129,140,248,0.6)",
-    headerTitleGradient:
-      "linear-gradient(120deg, #818cf8, #22d3ee, #e879f9)",
-    tabActiveBg:
-      "linear-gradient(135deg, rgba(15,23,42,0.92), rgba(129,140,248,0.38))",
-    tabInactiveBg: "rgba(15,23,42,0.6)",
-    tabActiveBorder: "1px solid rgba(129,140,248,0.85)",
-    tabInactiveBorder: "1px solid rgba(148,163,184,0.55)",
-    tabActiveShadow:
-      "0 10px 30px rgba(15,23,42,0.95), 0 0 0 1px rgba(15,23,42,0.9)",
-    tabInactiveShadow: "0 6px 18px rgba(15,23,42,0.9)",
-    panelBackground:
-      "linear-gradient(145deg, rgba(15,23,42,0.96), rgba(15,23,42,0.96))",
-    panelBorder: "1px solid rgba(79,70,229,0.8)",
-    panelHeaderBg:
-      "linear-gradient(90deg, rgba(15,23,42,0.96), rgba(129,140,248,0.22))",
-    petAuraGradient:
-      "radial-gradient(circle at 30% 0%, rgba(129,140,248,0.5), transparent 55%)," +
-      "radial-gradient(circle at 80% 100%, rgba(244,114,182,0.45), transparent 55%)",
-    petHeadBg: "#020617",
-    petHeadBorder: "1px solid rgba(129,140,248,0.7)",
-    petBaseGradient:
-      "linear-gradient(to right, rgba(15,23,42,1), rgba(129,140,248,1))",
-    petBaseBorder: "1px solid rgba(129,140,248,0.9)",
-    petBaseShadow: "0 10px 24px rgba(129,140,248,0.7)",
-    petPupilGradient:
-      "radial-gradient(circle at 30% 20%, #f9fafb, #818cf8 55%, #020617)",
-    petPupilShadow: "0 0 12px rgba(129,140,248,0.95)",
-    primaryButtonBg:
-      "linear-gradient(135deg, rgba(129,140,248,0.32), rgba(56,189,248,0.35))",
-    primaryButtonBorder: "1px solid rgba(129,140,248,0.8)",
-    primaryButtonShadow:
-      "0 16px 34px rgba(15,23,42,0.97), 0 0 0 1px rgba(15,23,42,0.95)",
-    secondaryButtonBg:
-      "linear-gradient(135deg, rgba(15,23,42,0.96), rgba(129,140,248,0.28))",
-    secondaryButtonBorder: "1px solid rgba(148,163,184,0.78)",
-    secondaryButtonShadow:
-      "0 12px 26px rgba(15,23,42,0.97), 0 0 0 1px rgba(15,23,42,0.95)"
-  }
+      "linear-gradient(215deg, rgba(255, 255, 255, 0.03) 0%, transparent 40%)," +
+      "linear-gradient(125deg, rgba(255, 255, 255, 0.02) 0%, transparent 50%)," +
+      "linear-gradient(0deg, #050505 0%, #000000 100%)",
+    pageGlassOverlay:
+      "linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)",
+    pageGlassOverlayBlurPx: 8, // Kept low to avoid "wrinkle" artifacts but provide depth
+    accent: "#ffffff",
+    accentSoft: "rgba(255, 255, 255, 0.08)",
+    accentStrong: "rgba(255, 255, 255, 0.95)",
+    textPrimary: "#ffffff",
+    textMuted: "rgba(255, 255, 255, 0.4)",
+    textSoft: "rgba(255, 255, 255, 0.7)",
+    headerBadgeBg: "rgba(255, 255, 255, 0.05)",
+    headerBadgeBorder: "rgba(255, 255, 255, 0.2)",
+    headerTitleGradient: "linear-gradient(120deg, #ffffff 30%, #888888 100%)",
+    tabActiveBg: "rgba(255, 255, 255, 0.15)", // Translucent white glass look
+    tabInactiveBg: "rgba(255, 255, 255, 0.02)",
+    tabActiveBorder: "1px solid rgba(255, 255, 255, 0.4)",
+    tabInactiveBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    tabActiveShadow: "0 8px 32px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.05)",
+    tabInactiveShadow: "none",
+    tabTextActive: "#ffffff",
+    tabTextInactive: "rgba(255, 255, 255, 0.5)",
+    panelBackground: "rgba(10, 10, 10, 0.8)", // Semi-transparent panels
+    panelBorder: "1px solid rgba(255, 255, 255, 0.15)",
+    panelHeaderBg: "rgba(255, 255, 255, 0.03)",
+    panelHeaderText: "rgba(255, 255, 255, 0.9)",
+    panelHeaderDivider: "rgba(255, 255, 255, 0.1)",
+    editorGutterBg: "transparent",
+    editorGutterText: "rgba(255, 255, 255, 0.3)",
+    editorGutterBorder: "rgba(255, 255, 255, 0.05)",
+    editorBg: "rgba(0, 0, 0, 0.4)",
+    editorText: "#ffffff",
+    editorPlaceholder: "rgba(255, 255, 255, 0.25)",
+    editorSelection: "rgba(255, 255, 255, 0.1)",
+    botBubbleBg: "rgba(20, 20, 20, 0.6)",
+    botBubbleBorder: "1px solid rgba(255, 255, 255, 0.2)",
+    botBubbleTitle: "rgba(255, 255, 255, 0.5)",
+    botBubbleText: "rgba(255, 255, 255, 0.9)",
+    botBubbleShadow: "0 20px 50px rgba(0, 0, 0, 0.9)",
+    petAuraGradient: "linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%)",
+    petHeadBg: "#050505",
+    petHeadBorder: "1px solid rgba(255, 255, 255, 0.3)",
+    petEyeBg: "#000000",
+    petEyeBorder: "1px solid rgba(255, 255, 255, 0.2)",
+    petMouthBorder: "rgba(255, 255, 255, 0.4)",
+    petBaseGradient: "linear-gradient(90deg, #222, #fff, #222)",
+    petBaseBorder: "1px solid rgba(255, 255, 255, 0.5)",
+    petBaseShadow: "0 0 20px rgba(255, 255, 255, 0.1)",
+    petPupilGradient: "radial-gradient(circle at 30% 20%, #fff, #555 60%, #000)",
+    petPupilShadow: "0 0 10px rgba(255, 255, 255, 0.4)",
+    petShadow: "none",
+    primaryButtonBg: "rgba(255, 255, 255, 0.1)", // Glass button
+    primaryButtonBorder: "1px solid rgba(255, 255, 255, 0.5)",
+    primaryButtonShadow: "inset 0 0 15px rgba(255, 255, 255, 0.05)",
+    secondaryButtonBg: "rgba(255, 255, 255, 0.02)",
+    secondaryButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    secondaryButtonShadow: "none",
+    selectBg: "rgba(20, 20, 20, 0.8)",
+    selectBorder: "rgba(255, 255, 255, 0.2)",
+    selectText: "#ffffff",
+    focusRing: "0 0 0 2px rgba(255, 255, 255, 0.3)"
+}
 };
 
 type VoiceGender = "female" | "male";
@@ -173,6 +335,42 @@ function App() {
   const outputLinesRef = useRef<HTMLDivElement>(null);
 
   const theme = LANGUAGE_THEMES[language];
+
+  const runtimeStyles = useMemo(() => {
+    const isFinePointer =
+      typeof window !== "undefined" &&
+      "matchMedia" in window &&
+      window.matchMedia("(pointer: fine)").matches;
+
+    return {
+      interactive: {
+        ...(styles.interactive as React.CSSProperties),
+        cursor: isFinePointer ? "none" : "default"
+      } as React.CSSProperties
+    };
+  }, []);
+
+  const editorBaseStyle = useMemo<React.CSSProperties>(
+    () => ({
+      ...styles.textarea,
+      background: theme.editorBg,
+      color: theme.editorText,
+      caretColor: theme.accent
+    }),
+    [theme]
+  );
+
+  const editorFocusStyle = useMemo<React.CSSProperties>(
+    () => ({
+      boxShadow: theme.focusRing,
+      outline: "none"
+    }),
+    [theme]
+  );
+
+  const [focusedEditor, setFocusedEditor] = useState<"code" | "output" | null>(
+    null
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setShowGreeting(false), 6000);
@@ -396,9 +594,26 @@ function App() {
       style={{
         ...styles.page,
         background: theme.pageBackground,
-        backgroundImage: theme.pageBackgroundImage
+        backgroundImage: theme.pageBackgroundImage,
+        color: theme.textPrimary
       }}
     >
+      {/* glass overlay */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          background: theme.pageGlassOverlay,
+          backdropFilter: `blur(${theme.pageGlassOverlayBlurPx}px)`,
+          WebkitBackdropFilter: `blur(${theme.pageGlassOverlayBlurPx}px)`,
+          opacity: 1,
+          zIndex: 0
+        }}
+      />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
 
       <div style={styles.header}>
         <h1
@@ -412,7 +627,7 @@ function App() {
           COGU
         </h1>
 
-        <p style={styles.subtitle}>
+        <p style={{ ...styles.subtitle, color: theme.textMuted }}>
           Meet COGU – your friendly code explainer. Paste any snippet, pick a
           language, and get a simple, step‑by‑step breakdown.
         </p>
@@ -421,7 +636,7 @@ function App() {
       {/* Top Bot */}
 
       <div
-        style={styles.interactive}
+        style={runtimeStyles.interactive}
         onMouseMove={handleInteractiveMove}
         onMouseLeave={handleInteractiveLeave}
       >
@@ -430,12 +645,15 @@ function App() {
           <div
             style={{
               ...styles.greetingBubble,
-              borderColor: theme.accentStrong,
-              boxShadow: "0 18px 40px rgba(15,23,42,0.96)"
+              borderColor: theme.botBubbleBorder,
+              background: theme.botBubbleBg,
+              boxShadow: theme.botBubbleShadow
             }}
           >
-            <div style={styles.greetingTitle}>COGU</div>
-            <div style={styles.greetingText}>
+            <div style={{ ...styles.greetingTitle, color: theme.botBubbleTitle }}>
+              COGU
+            </div>
+            <div style={{ ...styles.greetingText, color: theme.botBubbleText }}>
               Hey, I&apos;m COGU. Drop in your code, choose a language, and I&apos;ll
               walk you through what it does.
             </div>
@@ -469,7 +687,13 @@ function App() {
               }}
             >
               <div style={styles.petFace}>
-                <div style={styles.petEye}>
+                <div
+                  style={{
+                    ...styles.petEye,
+                    background: theme.petEyeBg,
+                    border: theme.petEyeBorder
+                  }}
+                >
                   <div
                     style={{
                       ...(petAngry
@@ -483,7 +707,13 @@ function App() {
                     }}
                   />
                 </div>
-                <div style={styles.petEye}>
+                <div
+                  style={{
+                    ...styles.petEye,
+                    background: theme.petEyeBg,
+                    border: theme.petEyeBorder
+                  }}
+                >
                   <div
                     style={{
                       ...(petAngry
@@ -498,7 +728,12 @@ function App() {
                   />
                 </div>
               </div>
-              <div style={styles.petMouth} />
+              <div
+                style={{
+                  ...styles.petMouth,
+                  borderBottom: `2px solid ${theme.petMouthBorder}`
+                }}
+              />
             </div>
 
             <div style={styles.petBase}>
@@ -506,13 +741,14 @@ function App() {
                 style={{
                   ...styles.petBaseInner,
                   background: theme.petBaseGradient,
-                  boxShadow: theme.petBaseShadow
+                  boxShadow: theme.petBaseShadow,
+                  border: theme.petBaseBorder
                 }}
               />
             </div>
           </div>
 
-          <div style={styles.petShadow} />
+          <div style={{ ...styles.petShadow, background: theme.petShadow }} />
         </div>
 
       </div>
@@ -539,7 +775,8 @@ function App() {
                     : theme.tabInactiveBorder,
                   boxShadow: isActive
                     ? theme.tabActiveShadow
-                    : theme.tabInactiveShadow
+                    : theme.tabInactiveShadow,
+                  color: isActive ? theme.tabTextActive : theme.tabTextInactive
                 }}
               >
                 {lang === "cpp"
@@ -554,12 +791,18 @@ function App() {
         </div>
 
         <div style={styles.voiceSelectorWrapper}>
-          <label style={styles.voiceLabel}>
+          <label style={{ ...styles.voiceLabel, color: theme.textSoft }}>
             Voice
             <select
               value={voiceGender}
               onChange={e => setVoiceGender(e.target.value as VoiceGender)}
-              style={styles.voiceSelect}
+              style={{
+                ...styles.voiceSelect,
+                background: theme.selectBg,
+                border: `1px solid ${theme.selectBorder}`,
+                color: theme.selectText,
+                boxShadow: "none"
+              }}
             >
               <option value="female">Female</option>
               <option value="male">Male</option>
@@ -586,7 +829,9 @@ function App() {
           <div
             style={{
               ...styles.panelHeader,
-              background: theme.panelHeaderBg
+              background: theme.panelHeaderBg,
+              color: theme.panelHeaderText,
+              borderBottom: `1px solid ${theme.panelHeaderDivider}`
             }}
           >
             Code Snippet
@@ -594,7 +839,15 @@ function App() {
 
           <div style={styles.editorWrapper}>
 
-            <div ref={codeLinesRef} style={styles.lineNumbers}>
+            <div
+              ref={codeLinesRef}
+              style={{
+                ...styles.lineNumbers,
+                background: theme.editorGutterBg,
+                color: theme.editorGutterText,
+                borderRight: `1px solid ${theme.editorGutterBorder}`
+              }}
+            >
               <pre>{generateLineNumbers(code)}</pre>
             </div>
 
@@ -603,7 +856,12 @@ function App() {
               onChange={e => setCode(e.target.value)}
               onScroll={e => handleScroll(e, codeLinesRef)}
               placeholder="Paste your code here..."
-              style={styles.textarea}
+              style={{
+                ...editorBaseStyle,
+                ...(focusedEditor === "code" ? editorFocusStyle : null)
+              }}
+              onFocus={() => setFocusedEditor("code")}
+              onBlur={() => setFocusedEditor(null)}
             />
 
           </div>
@@ -623,7 +881,9 @@ function App() {
           <div
             style={{
               ...styles.panelHeader,
-              background: theme.panelHeaderBg
+              background: theme.panelHeaderBg,
+              color: theme.panelHeaderText,
+              borderBottom: `1px solid ${theme.panelHeaderDivider}`
             }}
           >
             Explanation
@@ -631,7 +891,15 @@ function App() {
 
           <div style={styles.editorWrapper}>
 
-            <div ref={outputLinesRef} style={styles.lineNumbers}>
+            <div
+              ref={outputLinesRef}
+              style={{
+                ...styles.lineNumbers,
+                background: theme.editorGutterBg,
+                color: theme.editorGutterText,
+                borderRight: `1px solid ${theme.editorGutterBorder}`
+              }}
+            >
               <pre>{generateLineNumbers(output)}</pre>
             </div>
 
@@ -640,7 +908,12 @@ function App() {
               readOnly
               onScroll={e => handleScroll(e, outputLinesRef)}
               placeholder="Explanation will appear here..."
-              style={styles.textarea}
+              style={{
+                ...editorBaseStyle,
+                ...(focusedEditor === "output" ? editorFocusStyle : null)
+              }}
+              onFocus={() => setFocusedEditor("output")}
+              onBlur={() => setFocusedEditor(null)}
             />
 
           </div>
@@ -658,8 +931,9 @@ function App() {
           style={{
             ...styles.secondaryBtn,
             background: "transparent",
-            border: "1px dashed rgba(148,163,184,0.9)",
-            boxShadow: "none"
+            border: `1px dashed ${theme.textSoft}`,
+            boxShadow: "none",
+            color: theme.textPrimary
           }}
           className="secondary-btn"
         >
@@ -672,7 +946,8 @@ function App() {
             ...styles.primaryBtn,
             background: theme.primaryButtonBg,
             border: theme.primaryButtonBorder,
-            boxShadow: theme.primaryButtonShadow
+            boxShadow: theme.primaryButtonShadow,
+            color: theme.textPrimary
           }}
           className="primary-btn"
         >
@@ -685,11 +960,12 @@ function App() {
             ...styles.secondaryBtn,
             background: theme.secondaryButtonBg,
             border: theme.secondaryButtonBorder,
-            boxShadow: theme.secondaryButtonShadow
+            boxShadow: theme.secondaryButtonShadow,
+            color: theme.textPrimary
           }}
           className="secondary-btn"
         >
-          🔊 Voice Output
+          Voice Output
         </button>
 
         <button
@@ -698,7 +974,8 @@ function App() {
             ...styles.secondaryBtn,
             background: theme.secondaryButtonBg,
             border: theme.secondaryButtonBorder,
-            boxShadow: theme.secondaryButtonShadow
+            boxShadow: theme.secondaryButtonShadow,
+            color: theme.textPrimary
           }}
           className="secondary-btn"
         >
@@ -707,6 +984,7 @@ function App() {
 
       </div>
 
+      </div>
     </div>
   );
 }
@@ -716,7 +994,7 @@ const styles: any = {
   page: {
 
     minHeight: "100vh",
-    color: "white",
+    position: "relative",
     padding: "40px",
     fontFamily: "sans-serif",
     textAlign: "center"
@@ -736,7 +1014,8 @@ const styles: any = {
     marginTop: "4px",
     fontSize: "14px",
     maxWidth: "640px",
-    color: "#9ca3af"
+    color: "#9ca3af",
+    lineHeight: 1.45
 
   },
 
@@ -841,7 +1120,10 @@ const styles: any = {
 
     padding: "10px",
     borderBottom: "1px solid #334155",
-    fontWeight: 600
+    fontWeight: 650,
+    letterSpacing: "0.03em",
+    textTransform: "uppercase",
+    fontSize: "12px"
 
   },
 
@@ -860,7 +1142,7 @@ const styles: any = {
     padding: "12px 8px",
     color: "#64748b",
     fontFamily: "monospace",
-    fontSize: "14px",
+    fontSize: "13px",
     lineHeight: "22px",
     width: "52px",
     textAlign: "right",
